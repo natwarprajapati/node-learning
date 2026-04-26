@@ -11,10 +11,10 @@ import { createUserSchema } from "../validations/user.validation.js";
 
 const router = express.Router();
 
-router.get("/users", getUsers);
-router.get("/users/:id", getUserById);
+router.get("/", getUsers);
 router.post("/create-user", validate(createUserSchema), createUser);
 router.delete("/delete-user/:id", deleteUser);
 router.put("/update-user/:id", updateUser);
+router.get("/:id", getUserById);
 
 export default router;

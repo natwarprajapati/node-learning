@@ -7,11 +7,11 @@ export const createUser = asyncHandler(async (req, res) => {
 
   const user = await User.create({ name, age });
 
-  //   if (!user) {
-  //     const error = new Error("Failed to create user");
-  //     error.statusCode = 409;
-  //     throw error;
-  //   }
+  // if (!user) {
+  //   const error = new Error("Failed to create user");
+  //   error.statusCode = 409;
+  //   throw error;
+  // }
 
   res.status(201).json(user);
 });
@@ -20,7 +20,20 @@ export const createUser = asyncHandler(async (req, res) => {
 export const getUsers = asyncHandler(async (req, res) => {
   const users = await User.find();
 
-  res.json(users);
+  // res.json(users);
+  // return res.status(200).json(
+  //   ApiResponse(200, { timestamp: new Date().toISOString() }, "Server is running")
+  // );
+
+  return res.status(200).json({
+    status: 200,
+    success: true,
+    message: "Users fetched successfully",
+    count: users.length,
+    usersData: users,
+  })
+
+  // res.status(200).json(users);
 });
 
 // GET BY ID
