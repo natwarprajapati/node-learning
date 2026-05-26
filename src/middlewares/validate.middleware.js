@@ -5,8 +5,8 @@ const validate = (schema) => (req, res, next) => {
     next();
   } catch (error) {
     res.status(400).json({
-      message: "validation Error",
-      error: error.error,
+      message: "Validation error",
+      error: error.errors || error.issues || error.message,
     });
   }
 };

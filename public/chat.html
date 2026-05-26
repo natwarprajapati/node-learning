@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Socket Chat Demo</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0f172a;
+        --panel: #111827;
+        --panel-2: #1f2937;
+        --border: #334155;
+        --text: #e5e7eb;
+        --muted: #94a3b8;
+        --accent: #22c55e;
+        --accent-2: #38bdf8;
+        --danger: #ef4444;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        background:
+          radial-gradient(circle at top left, rgba(56, 189, 248, 0.14), transparent 30%),
+          radial-gradient(circle at bottom right, rgba(34, 197, 94, 0.12), transparent 28%),
+          var(--bg);
+        color: var(--text);
+      }
+
+      .wrap {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+
+      .hero {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 20px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 28px;
+      }
+
+      .muted { color: var(--muted); }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 320px 1fr 280px;
+        gap: 16px;
+      }
+
+      .card {
+        background: rgba(17, 24, 39, 0.96);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 16px;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+      }
+
+      .card h2 {
+        margin: 0 0 12px;
+        font-size: 18px;
+      }
+
+      label {
+        display: block;
+        font-size: 13px;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+
+      input, textarea, button, select {
+        width: 100%;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: var(--panel-2);
+        color: var(--text);
+        padding: 11px 12px;
+        font: inherit;
+      }
+
+      textarea {
+        resize: vertical;
+        min-height: 84px;
+      }
+
+      button {
+        cursor: pointer;
+        background: linear-gradient(135deg, var(--accent-2), var(--accent));
+        border: 0;
+        font-weight: 700;
+      }
+
+      button.secondary {
+        background: #374151;
+      }
+
+      button.danger {
+        background: linear-gradient(135deg, #f87171, var(--danger));
+      }
+
+      .stack { display: grid; gap: 10px; }
+      .row { display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+      .list {
+        display: grid;
+        gap: 8px;
+        max-height: 600px;
+        overflow: auto;
+        padding-right: 4px;
+      }
+
+      .item {
+        border: 1px solid var(--border);
+        background: rgba(31, 41, 55, 0.6);
+        border-radius: 14px;
+        padding: 12px;
+      }
+
+      .item.active {
+        border-color: var(--accent-2);
+        box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.25);
+      }
+
+      .meta {
+        font-size: 12px;
+        color: var(--muted);
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+
+      .messages {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        min-height: 520px;
+        max-height: 620px;
+        overflow: auto;
+        padding-right: 4px;
+      }
+
+      .message {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 12px;
+        background: rgba(15, 23, 42, 0.6);
+      }
+
+      .message.mine {
+        border-color: rgba(34, 197, 94, 0.65);
+        background: rgba(34, 197, 94, 0.08);
+      }
+
+      .message small {
+        color: var(--muted);
+      }
+
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .status {
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: rgba(56, 189, 248, 0.1);
+        border: 1px solid rgba(56, 189, 248, 0.35);
+        color: #bae6fd;
+        font-size: 14px;
+        min-height: 44px;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: rgba(148, 163, 184, 0.14);
+        color: var(--text);
+        font-size: 12px;
+      }
+
+      @media (max-width: 1100px) {
+        .grid { grid-template-columns: 1fr; }
+        .messages { min-height: 380px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="hero">
+        <div>
+          <h1>Socket Chat Demo</h1>
+          <div class="muted">Join a channel, send live messages, and watch updates stream in real time.</div>
+        </div>
+        <div class="pill" id="socketState">Disconnected</div>
+      </div>
+
+      <div class="grid">
+        <section class="card">
+          <h2>Identity</h2>
+          <div class="stack">
+            <div>
+              <label for="userId">User ID</label>
+              <input id="userId" placeholder="MongoDB user id" />
+            </div>
+            <div class="row">
+              <button id="connectBtn">Connect</button>
+              <button class="secondary" id="loadChannelsBtn">Load Channels</button>
+            </div>
+            <div class="status" id="status">Connect with a user id to start chatting.</div>
+          </div>
+
+          <div style="height: 16px;"></div>
+
+          <h2>Create Channel</h2>
+          <div class="stack">
+            <div>
+              <label for="channelName">Name</label>
+              <input id="channelName" placeholder="general" />
+            </div>
+            <div>
+              <label for="channelDescription">Description</label>
+              <input id="channelDescription" placeholder="Team announcements and updates" />
+            </div>
+            <button id="createChannelBtn">Create Channel</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Messages</h2>
+          <div class="muted" id="activeChannelLabel">No channel joined</div>
+          <div style="height: 12px;"></div>
+          <div class="messages" id="messages"></div>
+          <div style="height: 12px;"></div>
+          <div class="stack">
+            <div>
+              <label for="messageInput">Message</label>
+              <textarea id="messageInput" placeholder="Type a message..."></textarea>
+            </div>
+            <div class="row">
+              <button id="sendBtn">Send</button>
+              <button class="secondary" id="markReadBtn">Mark Read</button>
+            </div>
+          </div>
+        </section>
+
+        <aside class="card">
+          <h2>Channels</h2>
+          <div class="list" id="channelList"></div>
+
+          <div style="height: 16px;"></div>
+          <h2>Members</h2>
+          <div class="list" id="memberList"></div>
+        </aside>
+      </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/chat.js"></script>
+  </body>
+</html>
