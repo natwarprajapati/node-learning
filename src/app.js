@@ -1,74 +1,83 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
+import morgan from "morgan";
 import dotenv from "dotenv";
-import path from "path";
-import { fileURLToPath } from "url";
-import connectDB from "./config/db.js";
-import ApiResponse from "./utils/ApiResponse.js";
-import userRouter from "./routes/user.routes.js"
+
+import authRoutes from "./routes/authRoutes.js";
+import categoryRoutes from "./routes/categoryRoutes.js";
+import productRoutes from "./routes/productRoutes.js";
+import orderRoutes from "./routes/orderRoutes.js";
+
+import { errorHandler, notFound } from "./middleware/errorHandler.js";
 
 dotenv.config();
 
-// Get the directory name of the current module
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 const app = express();
 
-// Middleware
+/**
+ * Middleware Configuration
+ */
+
+// Security Middleware
+// app.use(helmet());
+
+// CORS Configuration
 app.use(
-    cors({
-        origin: "*",
-        credentials: true,
-        methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-        allowedHeaders: ["Content-Type", "Authorization"],
-    })
+  cors({
+    origin: "*",
+    credentials: false,
+  }),
 );
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-// Serve static files from the public directory
-app.use(express.static(path.join(__dirname, "public")));
+// Logging Middleware
+app.use(morgan("combined"));
 
-// Connect to MongoDB
-connectDB().catch((error) => {
-    console.error("Failed to connect to MongoDB:", error.message);
-    // In development, continue running but warn about database issues
-    if (process.env.NODE_ENV === "production") {
-        process.exit(1);
-    }
+// Body Parser Middleware
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ limit: "10mb", extended: true }));
+
+/**
+ * Health Check Route
+ */
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Server is running",
+    timestamp: new Date().toISOString(),
+  });
 });
 
-// Health check route
-app.get("/api/v1/test", (req, res) => {
-    res.status(200).json(
-        ApiResponse(200, { timestamp: new Date().toISOString() }, "Server is running")
-    );
+/**
+ * API Routes
+ */
+app.use("/api/auth", authRoutes);
+app.use("/api/categories", categoryRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/orders", orderRoutes);
+
+/**
+ * Welcome Route
+ */
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Welcome to E-Commerce Backend API",
+    version: "1.0.0",
+    endpoints: {
+      auth: "/api/auth",
+      categories: "/api/categories",
+      products: "/api/products",
+      orders: "/api/orders",
+      health: "/health",
+    },
+  });
 });
 
-// API Routes
-app.use("/api/v1/user", userRouter);
-
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-    console.error("Error:", err);
-    const status = err.status || 500;
-    const message = err.message || "Internal server error";
-    const errorData = process.env.NODE_ENV === "development" ? err.stack : undefined;
-
-    res.status(status).json(ApiResponse(status, null, message, false, errorData));
-});
-
-// 404 handler
-app.use((req, res) => {
-    res.status(404).json(ApiResponse(404, null, "Route not found", false));
-});
-
-const PORT = process.env.PORT || 8080;
-
-app.listen(PORT, () => {
-    console.log(`\nServer is running on port : ${PORT}`);
-});
+/**
+ * Error Handling Middleware
+ */
+app.use(notFound);
+app.use(errorHandler);
 
 export default app;
