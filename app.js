@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import connectDB from "./src/config/db.js";
 import { ApiResponse } from "./src/utils/ApiResponse.js";
 import authRouter from "./src/routers/auth.routes.js";
-import userRouter from "/src/controllers/user.controller.js";
+import userRouter from "./src/routers/user.routes.js";
 
 dotenv.config();
 
