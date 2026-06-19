@@ -1,19 +1,16 @@
-const ApiResponse = (
-    status,
-    data,
-    message = "Success",
-    success = true,
-    error
+export const ApiResponse = (
+  status,
+  message = "success",
+  success = true,
+  data,
+  error,
 ) => {
-    const response = {
-        status,
-        data,
-        message,
-        success: status === 200 || status === 201 ? true : false,
-        error,
-    };
-
-    return response;
+  const response = {
+    status,
+    message,
+    success: status === 200 || status === 201 ? true : false,
+    data,
+    error,
+  };
+  return response;
 };
-
-export default ApiResponse;
