@@ -1,16 +1,17 @@
 export const ApiResponse = (
   status,
   message = "success",
-  success = true,
   data,
   error,
+  ...rest
 ) => {
   const response = {
     status,
-    message,
     success: status === 200 || status === 201 ? true : false,
+    message,
     data,
     error,
+    ...rest,
   };
   return response;
 };

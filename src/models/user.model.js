@@ -44,6 +44,7 @@ userSchema.methods.getJWTToken = function () {
       id: this._id,
       email: this.email,
     },
+    process.env.JWT_SECRET || "seceretkeyzxczxc",
     {
       expiresIn: "7d",
     },
