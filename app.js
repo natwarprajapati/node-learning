@@ -5,6 +5,7 @@ import connectDB from "./src/config/db.js";
 import { ApiResponse } from "./src/utils/ApiResponse.js";
 import authRouter from "./src/routers/auth.routes.js";
 import userRouter from "./src/routers/user.routes.js";
+import { redisClient } from "./src/config/redis.js";
 
 dotenv.config();
 
@@ -29,9 +30,54 @@ connectDB().catch((error) => {
   }
 });
 
+// connect to redis
+const connectRedis = async () => {
+  try {
+    if (!redisClient.isOpen) {
+      await redisClient.connect();
+      console.log("Redis connected successfully");
+    } else {
+      console.log("Redis is already connected");
+    }
+  } catch (error) {
+    console.error("Redis connection failed:", error);
+  }
+};
+
+connectRedis();
+
+// client.on("connect", () => {
+//   console.log("Redis Connection Successful");
+// });
+
+// client.on("error", () => {
+//   console.log("Redis connaction failed ", error);
+// });
+
+// try {
+//   await client.connect();
+//   console.log("connected");
+// } catch (error) {
+//   console.log(error);
+// }
+
+// client.set("key", "value", (err, reply) => {
+//   if (err) {
+//     console.error("Error setting key in Redis:", err);
+//   } else {
+//     console.log("Key set successfully in Redis");
+//   }
+// });
+
+// await client.set("name", "Natwar");
+
+// const value = await client.get("name");
+
+// console.log(value);
+
 // Health Check endpoint
 
-app.get("api/v1/test", (req, res) => {
+app.get("/api/v1/test", (req, res) => {
   res.status(200).json(
     ApiResponse(200, "Server is running", true, {
       timestamp: new Date().toISOString(),

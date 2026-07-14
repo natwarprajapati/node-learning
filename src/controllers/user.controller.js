@@ -3,7 +3,7 @@ import User from "../models/user.model.js";
 export const getAllUsers = async (req, res) => {
   const usersList = await User.find().select("+password");
 
-  usersList.password = 76767;
+  // usersList.password = 76767;
 
   const loggedUserId = await req.id;
 

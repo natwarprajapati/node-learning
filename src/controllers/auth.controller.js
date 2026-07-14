@@ -1,6 +1,9 @@
 import { ApiResponse } from "../utils/ApiResponse.js";
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
+import { EmailAlreadyExists } from "../errorsHandlers/emailAlreadyExits.js";
+import { sendOtpOnMail } from "../utils/sendOtpOnEmail.ts";
+import { otpSavedInRedis, verifyOtpInRedis } from "../redis/otpSavedInRedis.js";
 
 // Token blacklist to store logged out tokens
 export const tokenBlacklist = new Set();
@@ -27,6 +30,9 @@ export const createUser = async (req, res) => {
   if (userExits) {
     return res.status(409).json(ApiResponse(409, "user already exits!", false));
   }
+
+  // const emailExists = await EmailAlreadyExists(User, email, res);
+  // if (emailExists) return;
 
   if (password.length < 6) {
     return res
@@ -82,7 +88,6 @@ export const loginUser = async (req, res) => {
   }
 
   // generate token
-
   const token = user.getJWTToken();
 
   return res
@@ -114,5 +119,61 @@ export const logoutUser = async (req, res) => {
       .json(ApiResponse(200, "Logged out successfully", true));
   } catch (error) {
     return res.status(500).json(ApiResponse(500, "Error during logout", false));
+  }
+};
+
+export const registerWithOtp = async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json(ApiResponse(400, "please enter email", false));
+  }
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+  try {
+    await otpSavedInRedis(email, otp, 300);
+
+    const mailResult = await sendOtpOnMail(email, otp);
+    if (mailResult?.error) {
+      return res.status(500).json(ApiResponse(500, mailResult.error, false));
+    }
+
+    return res
+      .status(201)
+      .json(ApiResponse(201, "Otp sent successfully on mail", true));
+  } catch (error) {
+    console.error("Error sending OTP:", error);
+    return res.status(500).json(ApiResponse(500, "Error sending OTP", false));
+  }
+};
+
+export const verifyOtp = async (req, res) => {
+  try {
+    const email = req.body.email?.trim();
+    const otp = String(req.body.otp || "").trim();
+
+    if (!email || !otp) {
+      return res
+        .status(400)
+        .json(ApiResponse(400, "please enter email and otp", false));
+    }
+
+    const isOtpValid = await verifyOtpInRedis(email, otp);
+
+    if (!isOtpValid) {
+      return res
+        .status(400)
+        .json(ApiResponse(400, "Otp is not valid or expired", false));
+    }
+
+    return res
+      .status(200)
+      .json(ApiResponse(200, "Otp verified successfully", true));
+  } catch (error) {
+    console.error("verifyOtp error:", error);
+    return res
+      .status(500)
+      .json(ApiResponse(500, "Internal server error", false));
   }
 };
